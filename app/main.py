@@ -1,3 +1,4 @@
+import asyncio
 import logging
 import time
 import uuid
@@ -17,10 +18,34 @@ configure_logging(settings.log_level)
 logger = logging.getLogger(__name__)
 
 
+async def _init_db_with_retry(attempts: int = 5, delay: float = 2.0) -> None:
+    """Best-effort schema bootstrap.
+
+    On a fresh deploy the database may not be reachable the instant the app
+    boots. Retry a few times, but never let a DB hiccup crash startup — the
+    app must still bind to $PORT so the platform healthcheck can succeed.
+    /ready reports the real dependency status.
+    """
+    for attempt in range(1, attempts + 1):
+        try:
+            await init_db()
+            logger.info("database initialized")
+            return
+        except Exception:
+            logger.warning(
+                "database init failed; will retry",
+                extra={"attempt": attempt, "max_attempts": attempts},
+                exc_info=True,
+            )
+            if attempt < attempts:
+                await asyncio.sleep(delay)
+    logger.error("database init gave up; starting anyway (see /ready)")
+
+
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     logger.info("starting up", extra={"environment": settings.environment})
-    await init_db()
+    await _init_db_with_retry()
     yield
     await close_redis()
     logger.info("shutdown complete")
