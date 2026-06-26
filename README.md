@@ -5,7 +5,7 @@ Redis cache-aside, and structured JSON logging with per-request correlation IDs.
 
 ## Deploy on Railway
 
-[![Deploy on Railway](https://railway.com/button.svg)](https://railway.com/deploy/fastapi-postgre-redis?referralCode=asepsp)
+[![Deploy on Railway](https://railway.com/button.svg)](https://railway.com/deploy/fastapi-postgres-redis?referralCode=asepsp)
 
 1. Click the button above (or deploy this repo into a new Railway project).
 2. Add the **PostgreSQL** and **Redis** plugins — Railway injects `DATABASE_URL`
